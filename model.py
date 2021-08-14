@@ -5,13 +5,15 @@ from torch.distributions import Categorical
 from collections import defaultdict
 
 class ActorCritic(nn.Module):
-    def __init__(self, granularity):
+    def __init__(self, granularity=None, input_dim=8, output_dim=8):
         super(ActorCritic, self).__init__()
-        self.action_translation_map = self.build_tranlation_map2(granularity)
-        self.affine = nn.Linear(8, 128)
+        if granularity:
+            self.action_translation_map = self.build_tranlation_map(granularity)
+        #self.first = nn.Linear(input_dim, 512)
+        self.affine = nn.Linear(input_dim, 128)
         #self.hidden = nn.Linear(256, 128)
 
-        self.action_layer = nn.Linear(128, len(self.action_translation_map))
+        self.action_layer = nn.Linear(128, len(self.action_translation_map) if granularity else output_dim)
         self.value_layer = nn.Linear(128, 1)
 
         self.logprobs = []
@@ -22,6 +24,7 @@ class ActorCritic(nn.Module):
 
     def forward(self, state):
         state = torch.from_numpy(state).float()
+        #state = F.relu(self.first(state))
         state = F.relu(self.affine(state))
         #state = F.relu(self.hidden(state))
         
